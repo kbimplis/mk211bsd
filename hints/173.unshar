@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# 173 creates a patch file you are expected to apply. So extract it and reverse apply.
+# It also adds a randlib directory to replace ranlib.c. So, remove ranlib dir and
+# Copy ranlib.c from 2.10.1BSD on the assumption that it hasn't changed.
+cd $TEMP
+sed -n -e '/^sed.*patchfile/,/^SHAR_EOF/p' < $patch | sh -x
+cd $ROOT211
+patch -V none -R -p1 < $TEMP/patchfile
+
+# ranlib is a hybrid of the 2.10.1 and the 4.3BSD one. ranlib still produced
+# old-style tables, so pull it from 2.10.1 and apply hand crafted patch which
+# replaces a few lines in main and the entire nextel, fixsize and fixdate
+# functions.
+rm -rf usr/src/usr.bin/ranlib
+from2.10.1 usr/src/usr.bin/ranlib.c
+
+# Now apply the reconstruction patch
+patch -V none -p1 < $HINTSDIR/173.ranlib.diff
+
+# Bug from 24 Oct 89 Message-ID: <38871@wlbr.IMSD.CONTEL.COM>
+# But there's a conflict, so i've cached a hand-applied version.
+patch -V none -p1 < $HINTSDIR/173.ranlib-2.diff

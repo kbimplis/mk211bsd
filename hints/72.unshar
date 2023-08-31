@@ -1,0 +1,14 @@
+#
+# 72 adds the toy support and toy.o to the prototype makefiles.
+# We need to copy stuff over afterwards since it updates the
+# prototype Make.xxxx files.
+#
+cd $TEMP
+sed -n -e "/^sed.*SHAR_EOF > 'c'/,/^SHAR_EOF/p" < $patch | sh -x
+cd $ROOT211
+patch -V none -R -p1 < $TEMP/c
+rm usr/src/sys/pdp/toy.s
+cp usr/src/sys/conf/Make.pdp usr/src/sys/GENERIC
+sed -n -e '/Make.sunix/,/Make.unix/p' < $TEMP/c | sed -e 's=/conf/Make.sunix=/GENERIC/Makefile='  | patch -V none -p1 -R
+cp usr/src/sys/conf/Make.pdp usr/src/sys/KAZOO
+sed -n -e '/Make.nsunix/,/Make.sunix/p' < $TEMP/c | sed -e 's=/conf/Make.nsunix=/KAZOO/Makefile='  | patch -V none -p1 -R

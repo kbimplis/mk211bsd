@@ -1,0 +1,17 @@
+# Patch 152 and 153 do a lot of work with the assembler.
+# It is combined into just 2 files, then patched. Going
+# backwards, we'll just copy the 2.10.1 stuff and see if
+# it works going back foward and adjust as needed.
+#
+# See 152.unpatch
+#
+# So here, we remove as2.s, and copy all the as2?.s
+# files.
+#
+# Save p153 version for comparison
+mkdir -p ${SAVE}/153
+cp $ROOT211/usr/src/bin/as/* ${SAVE}/153
+rm $ROOT211/usr/src/bin/as/as2.s
+for i in 1 2 3 4 5 6 7 8 9; do
+    from2.10.1 usr/src/bin/as/as2${i}.s
+done

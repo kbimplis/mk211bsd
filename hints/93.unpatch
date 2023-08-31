@@ -1,0 +1,16 @@
+patch -V none -p1 -R < $patch
+cd $ROOT211
+cd usr/src/sys
+# Move from SMS -> KAZOO with this break
+rm -rf GENERIC SMS
+cd conf
+rm SMS
+# KAZOO is best effort... we have not a lot to go on and may not work
+./config KAZOO
+./config GENERIC
+cd ../GENERIC
+# Sigh, this looks like it was tweaked by hand, all the way back to 2.11 :(
+patch -V none < $HINTSDIR/93.localopts.diff
+# This is as good a place as any to snag this...
+cd $ROOT211
+from2.10.1 GENALLSYS

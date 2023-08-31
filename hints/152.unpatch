@@ -1,0 +1,65 @@
+# Patch 152 and 153 do a lot of work with the assembler.
+# It is combined into just 2 files, then patched. Going
+# backwards, we'll just copy the 2.10.1 stuff and see if
+# it works going back foward and adjust as needed.
+#
+# So here, we remove as0.s, and copy all the as1?.s
+# files.
+mkdir -p ${SAVE}/152
+rm $ROOT211/usr/src/bin/as/as0.s
+for i in 1 2 3 4 5 6 7 8 9; do
+    from2.10.1 usr/src/bin/as/as1${i}.s
+done
+# Maybe I should snag the patch from 152 for just Makefile, but
+# I'm lazy atm.
+from2.10.1 usr/src/bin/as/Makefile
+
+cd $ROOT211
+# Before we start to recover using the changes post 2.11, we need to do the ones between 2.10.1
+# and 2.11. These were posted in comp.bugs.2bsd (which the release notes say were applied to
+# 2.11).
+#
+# One bug from 23 Aug 89 fixes nops
+#	Message-ID: <35363@wlbr.IMSD.CONTEL.COM>
+# One bug from 15 Dec 89 fixing 1st phase of assembler not being split I/D friendly
+#	Message-ID: <42590@wlbr.IMSD.CONTEL.COM>
+# One bug from 26 Dec 89 fixes 2nd phase of assembler not being split I/D friendly
+#	Message-ID: <43068@wlbr.IMSD.CONTEL.COM>
+#
+# We re-apply them in date order, even though they appear to be backwards in the archive.
+(
+	cd usr/src/bin/as
+
+	#	Message-ID: <35363@wlbr.IMSD.CONTEL.COM>
+	zcat $TUHS/Usenet/comp.bugs.2bsd/1989-August.txt.gz | \
+	sed -n -e '/Index:.bin\/as 2.10BSD/,/^From /p' | \
+	patch -V none -p1
+
+	#	Message-ID: <42590@wlbr.IMSD.CONTEL.COM>
+	zcat $TUHS/Usenet/comp.bugs.2bsd/1989-December.txt.gz | \
+	sed -n -e '/Index:.bin\/as\/as1\?\.s 2.10BSD/,/^From /p' | \
+	patch -V none -p1
+
+	#	Message-ID: <43068@wlbr.IMSD.CONTEL.COM>
+	zcat $TUHS/Usenet/comp.bugs.2bsd/1989-December.txt.gz | \
+	sed -n -e '/Index:.bin\/as\/as2\?\.s 2.10BSD/,/^From /p' | \
+	patch -V none -p1
+)
+
+# The August 1989 patch added nop. The nop was already in the table in the wrong
+# place, so it needs to be removed to recover what was released in 2.11
+patch -V none -p1 < $HINTSDIR/152.fixup
+
+# 65 patches both as1 and as2 files, so do them both here. Going the other way
+# it will be fine so we don't need to be perfect.
+patch -V none -p1 < $PATCHDIR/65
+
+# 71 patches both as1 and as2 files, so do them both here. Going the other way
+# it will be fine so we don't need to be perfect.
+patch -V none -p1 < $PATCHDIR/71
+
+# Patch 107 makes some fixes to Makefile, so apply those in too so 107 undoes
+# them.
+sed -n -e'/\*\*\* .*\/as\/Makefile.old/,/*\*\* .*\/awk\/Makefile.old/p' < $PATCHDIR/107 | patch -V none -p1
+
+cp $ROOT211/usr/src/bin/as/* ${SAVE}/152

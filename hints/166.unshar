@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# 166 creates a patch file you are expected to apply. So extract it and reverse apply.
+cd $TEMP
+sed -n -e '/^sed.*patchfile/,/^SHAR_EOF/p' < $patch | sh -x
+cd $ROOT211
+patch -V none -R -p1 < $TEMP/patchfile

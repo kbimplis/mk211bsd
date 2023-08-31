@@ -1,0 +1,12 @@
+#
+# 185 patches the m4 man page and replaces m4. Grab the m4 from 2.10.1BSD on the theory they weren't changed.
+# we need to look at the CSRG SCCS archive and the bsd patches group to me sure.
+#
+sed -n -e '/^sed.*\/tmp\/m4.man.patch/,/^SHAR_EOF/p' < $patch | sed -e "s=/tmp/=$TEMP/=" | sh -x
+cd $ROOT211
+patch -V none -R -p1 < $TEMP/m4.man.patch
+rm -rf usr/src/usr.bin/m4
+mkdir usr/src/usr.bin/m4
+from2.10.1 usr/src/usr.bin/m4/Makefile usr/src/usr.bin/m4/m4.c usr/src/usr.bin/m4/m4y.y
+# Patch 115 makes some fixes to Makefile, so draw those in too so 115 undoes them
+sed -n -e'/\*\*\* .*m4\/Makefile.old/,/*\*\* .*\/prof\/Makefile.old/p' < $PATCHDIR/115 | patch -V none -p1

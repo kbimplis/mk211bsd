@@ -1,0 +1,48 @@
+# 160 creates a patch file you are expected to apply. So extract it and reverse apply.
+# It also does:
+#	rm -f /usr/src/bin/csh/shortnames.h
+#	rm -f /usr/src/bin/ar.c
+#	rm -f /usr/src/bin/ld.c
+#	rm -f /usr/src/bin/adb/dummy.c /usr/src/bin/adb/mac.h
+#	rm -f /usr/src/bin/adb/machine.h /usr/src/bin/adb/mode.h
+#	rm -rf /usr/src/bin/nm rm /usr/src/bin/ld /usr/src/bin/ar
+#	mkdir /usr/src/bin/nm /usr/src/bin/ld /usr/src/bin/ar
+#	chmod 755 /usr/src/bin/nm /usr/src/bin/ld /usr/src/bin/ar
+#	mv /usr/src/bin/nm.c /usr/src/bin/nm/nm.c
+# So add them back from 2.10.1BSD, remove dirs or move nm.c back
+cd $TEMP
+sed -n -e '/^sed.*patchfile/,/^SHAR_EOF/p' < $patch | sh -x
+cd $ROOT211
+patch -V none -R -p1 < $TEMP/patchfile
+# need to move this AFTER because the patch patches it in the new place.
+mv $ROOT211/usr/src/bin/nm/nm.c $ROOT211/usr/src/bin/nm.c
+rm -rf $ROOT211/usr/src/bin/nm
+
+for i in csh/shortnames.h ld.c adb/dummy.c adb/mac.h adb/machine.h adb/mode.h; do
+    from2.10.1 usr/src/bin/$i
+done
+
+from4.3 usr/src/bin/ar.c
+
+# There's one known patch to ld.c that is post 2.10.1 that appeared
+# in comp.bugs.2bsd:
+# From: sms at wlv.imsd.contel.com (Steven M. Schultz)
+# Date: 2 Aug 89 05:40:21 GMT
+# Subject: ld symboltable size is wrong
+# Message-ID: <34359@wlbr.IMSD.CONTEL.COM>
+#
+# Index:	bin/ld.c 2.10BSD
+# extract it and apply.
+##cd $ROOT211/usr/src/bin
+##zcat $TUHS/Usenet/comp.bugs.2bsd/1989-August.txt.gz | \
+##    sed -n -e '/^Index:.*bin\/ld.c/,/^==========/p' | patch -V none -p1
+# ld.diff is the putative diffs between 2.10.1 and 2.11, but it's not quite
+# right because the offsets aren't quite right. It's closer, but untested.
+cd $ROOT211
+patch -V none -p1 < $HINTSDIR/160.ld.diff
+# And because ld.c was 2.11 pl 141 apply it in as well
+cd $TEMP
+sed -e '1,/===cut here===/d' < $PATCHDIR/141 | sed -e "s=/tmp/=$TEMP/=" | sh -x
+cd $ROOT211
+patch -V none -p1 < $TEMP/19
+# 23 also in this arcive patches ld.1, which we're not recoverying from 2.10.1

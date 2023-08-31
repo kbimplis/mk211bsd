@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# 158 creates a patch file you are expected to apply. So extract it and reverse apply.
+# It also does:
+#	rm -f /usr/include/a.out.h
+#	rm -f /usr/include/nlist.h
+#	rm -f /usr/include/ar.h
+#	rm -f /usr/include/ranlib.h
+#	rm -f /usr/include/short_names.h
+# It also creates:
+#	/usr/include/a.out.h
+#	/usr/include/nlist.h
+#	/usr/include/ar.h
+#	/usr/include/ranlib.h
+# So we can just copy over stuff from 2.10.1BSD or 4.3BSD and not worry about removal.
+cd $TEMP
+sed -n -e '/^sed.*patchfile/,/^SHAR_EOF/p' < $patch | sh -x
+cd $ROOT211
+patch -V none -R -p1 < $TEMP/patchfile
+for i in a.out.h nlist.h short_names.h; do
+    from2.10.1 usr/include/$i
+    cp -f $ROOT211/usr/include/$i $ROOT211/usr/src/include
+done
+# But we have concluded that ar and ranlib, at least, came from 4.3BSD in the 2.11BSD
+# release for the transition to portable archive format. a.out didn't change from
+# 2.10.1 to 2.11, but did change in this series of patches, so we should grab it from
+# 2.10.1.
+echo "Recovering from 4.3 now"
+for i in ar.h ranlib.h; do
+    from4.3 usr/src/include/$i
+    cp -f $ROOT211/usr/src/include/$i $ROOT211/usr/include
+done
